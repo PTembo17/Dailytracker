@@ -1,0 +1,6 @@
+{
+  "version": "2.0.0",
+  "build_number": 20,
+  "apk_url": "https://github.com/your-user/your-repo/releases/download/v2.0.0/app-release.apk",
+  "release_notes": "Bug fixes and performance improvements"
+}
