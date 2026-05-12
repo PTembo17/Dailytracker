@@ -288,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : Icon(Icons.file_download_outlined, color: cs.primary),
             title: Text(
               'Export data to Excel',
-              style: TextStyle(color: cs.primary),
+              style: TextStyle(color: cs.secondary),
             ),
             subtitle: const Text(
                 'Saves tasks & logs as an .xlsx file — two sheets'),
