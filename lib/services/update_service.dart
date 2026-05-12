@@ -5,49 +5,68 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 class UpdateService {
   static const String versionUrl =
-    'https://raw.githubusercontent.com/your-user/your-repo/main/version.json';
+      'https://raw.githubusercontent.com/your-user/your-repo/main/version.json';
 
+  /// Returns the remote version payload if a newer build is available,
+  /// or null if the app is already up to date (or the check fails).
   static Future<Map<String, dynamic>?> checkForUpdate() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;      // e.g. "1.0.0"
-    final currentBuild = int.parse(packageInfo.buildNumber); // e.g. 10
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
 
-    final response = await http.get(Uri.parse(versionUrl));
-    if (response.statusCode != 200) return null;
+      final response = await http.get(Uri.parse(versionUrl));
+      if (response.statusCode != 200) return null;
 
-    final remote = jsonDecode(response.body);
-    final remoteBuild = remote['build_number'] as int;
+      final remote = jsonDecode(response.body) as Map<String, dynamic>;
+      final remoteBuild = remote['build_number'] as int;
 
-    if (remoteBuild > currentBuild) {
-      return remote; // update available → return the full payload
+      if (remoteBuild > currentBuild) {
+        return remote; // update available → return the full payload
+      }
+      return null; // already up to date
+    } catch (_) {
+      return null; // network / parse error → silently ignore
     }
-    return null;     // already up to date
   }
-  static void downloadAndInstall(String apkUrl) {
-  OtaUpdate()
-    .execute(
-      apkUrl,
-      destinationFilename: 'app-update.apk',
-    )
-    .listen(
-      (OtaEvent event) {
-        switch (event.status) {
-          case OtaStatus.DOWNLOADING:
-            // event.value = "0" to "100" (progress %)
-            print('Downloading: ${event.value}%');
-            break;
-          case OtaStatus.INSTALLING:
-            print('Launching installer...');
-            break;
-          case OtaStatus.ALREADY_RUNNING_ERROR:
-          case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-          case OtaStatus.INTERNAL_ERROR:
-            print('Error: ${event.value}');
-            break;
-          default:
-            break;
-        }
-      },
-    );
-}
+
+  /// Downloads the APK from [apkUrl] and triggers the Android installer.
+  ///
+  /// [onProgress] receives values 0–100 while downloading.
+  /// [onError]    receives a human-readable error message if something fails.
+  static void downloadAndInstall(
+    String apkUrl, {
+    void Function(int progress)? onProgress,
+    void Function(String error)? onError,
+  }) {
+    OtaUpdate()
+        .execute(
+          apkUrl,
+          destinationFilename: 'app-update.apk',
+        )
+        .listen(
+          (OtaEvent event) {
+            switch (event.status) {
+              case OtaStatus.DOWNLOADING:
+                final progress = int.tryParse(event.value ?? '0') ?? 0;
+                onProgress?.call(progress);
+                break;
+              case OtaStatus.INSTALLING:
+                // Installer handed off to Android — nothing more to do.
+                break;
+              case OtaStatus.ALREADY_RUNNING_ERROR:
+                onError?.call('An update is already in progress.');
+                break;
+              case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+                onError?.call(
+                    'Install permission not granted. Please allow installs from unknown sources.');
+                break;
+              case OtaStatus.INTERNAL_ERROR:
+                onError?.call('Download failed: ${event.value}');
+                break;
+              default:
+                break;
+            }
+          },
+        );
+  }
 }

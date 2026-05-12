@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/update_service.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../providers/task_provider.dart';
 import '../../services/export_service.dart';
@@ -19,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _remindDaily = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   bool _exporting = false;
+  bool _checkingUpdate = false;
 
   @override
   void initState() {
@@ -109,6 +111,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All data and reminders have been reset')),
       );
+    }
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────────
+
+  Future<void> _manualCheckUpdate() async {
+    if (_checkingUpdate) return;
+    setState(() => _checkingUpdate = true);
+    try {
+      final update = await UpdateService.checkForUpdate();
+      if (!mounted) return;
+      if (update == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You are on the latest version.')),
+        );
+        return;
+      }
+      final apkUrl = update['apk_url'] as String?;
+      final releaseNotes =
+          update['release_notes'] as String? ?? 'A new version is ready.';
+      final newVersion = update['version'] as String? ?? '';
+      if (apkUrl == null) return;
+
+      showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(
+              'Update available${newVersion.isNotEmpty ? ' — v$newVersion' : ''}'),
+          content: Text(releaseNotes),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Later'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                UpdateService.downloadAndInstall(
+                  apkUrl,
+                  onError: (err) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Update failed: $err')),
+                      );
+                    }
+                  },
+                );
+              },
+              child: const Text('Update now'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _checkingUpdate = false);
     }
   }
 
@@ -261,6 +318,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: Icon(Icons.info_outline),
             title: Text('Daily Task Tracker'),
             subtitle: Text('Version 1.0.0'),
+          ),
+
+          // Check for updates
+          ListTile(
+            leading: _checkingUpdate
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.system_update_outlined),
+            title: const Text('Check for updates'),
+            subtitle: const Text('Download and install the latest APK'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _checkingUpdate ? null : _manualCheckUpdate,
           ),
         ],
       ),
