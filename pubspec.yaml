@@ -1,0 +1,64 @@
+name: dailytracker
+description: "Daily Task Tracker — track habits, view monthly stats, and review history."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  provider: ^6.1.2
+
+  # Local database (SQLite)
+  sqflite: ^2.3.2
+  path: ^1.9.0
+
+  # Shared preferences
+  shared_preferences: ^2.2.3
+
+  # Date formatting
+  intl: ^0.19.0
+
+  # UUID generation
+  uuid: ^4.4.0
+
+  # ── Reminder / notification packages ──────────────────────────────────────
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+
+  # ── Export ────────────────────────────────────────────────────────────────
+  # Build and write .xlsx files
+  excel: ^4.0.6
+
+  # Resolve writable directories (Downloads / Documents) for the export file
+  path_provider: ^2.1.4
+
+  # Share / open the exported file
+  share_plus: ^10.1.2
+
+  package_info_plus: ^6.0.0   # reads installed version
+  upgrader: ^10.0.0            # shows update dialog UI
+  ota_update: ^5.0.0   
+  http: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/checkicon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/checkicon.png"
+
+flutter:
+  uses-material-design: true
