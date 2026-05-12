@@ -17,11 +17,14 @@ class UpdateService {
       final response = await http.get(Uri.parse(versionUrl));
       if (response.statusCode != 200) return null;
 
-      final remote = jsonDecode(response.body) as Map<String, dynamic>;
-      final remoteBuild = remote['build_number'] as int;
+      final remote = jsonDecode(response.body);
+      if (remote is! Map<String, dynamic>) return null;
+
+      final remoteBuild = int.tryParse(remote['build_number']?.toString() ?? '') ?? 0;
+      if (remoteBuild <= 0) return null;
 
       if (remoteBuild > currentBuild) {
-        return remote; // update available → return the full payload
+        return remote;
       }
       return null; // already up to date
     } catch (_) {

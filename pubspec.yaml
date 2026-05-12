@@ -42,9 +42,9 @@ dependencies:
   # Share / open the exported file
   share_plus: ^10.1.2
 
-  package_info_plus: ^6.0.0   # reads installed version
+  package_info_plus: ^8.3.1   # reads installed version
   upgrader: ^10.0.0            # shows update dialog UI
-  ota_update: ^5.0.0   
+  ota_update: ^5.0.0
   http: ^1.2.0
 
 dev_dependencies:
