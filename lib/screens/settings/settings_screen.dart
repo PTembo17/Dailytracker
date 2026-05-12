@@ -286,9 +286,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Icon(Icons.file_download_outlined, color: cs.primary),
-            title: Text(
+            title: const Text(
               'Export data to Excel',
-              style: TextStyle(color: cs.secondary),
+              style: TextStyle(color: Colors.green),
             ),
             subtitle: const Text(
                 'Saves tasks & logs as an .xlsx file — two sheets'),
