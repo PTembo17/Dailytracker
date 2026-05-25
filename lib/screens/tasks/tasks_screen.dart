@@ -111,7 +111,9 @@ class TasksScreen extends StatelessWidget {
                             .read<LogProvider>()
                             .toggleTask(task.id, today),
                         onDelete: () => _confirmDelete(
-                            context, task.id, task.name),
+                            context, task.id, task.name,
+                            hasReminder: hasReminder,
+                            reminderTime: task.reminderTime),
                         onReminderTap: () =>
                             ReminderSheet.show(context, task),
                       );
@@ -145,13 +147,36 @@ class TasksScreen extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, String id, String name) async {
+      BuildContext context, String id, String name,
+      {bool hasReminder = false, String? reminderTime}) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete task'),
-        content:
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text('Delete "$name"? All logs will be removed.'),
+            if (hasReminder && reminderTime != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.alarm_off_outlined,
+                      size: 15, color: AppColors.red400),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'The reminder set for $reminderTime will also be cancelled.',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.red400),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -164,7 +189,30 @@ class TasksScreen extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      context.read<TaskProvider>().removeTask(id);
+      await context.read<TaskProvider>().removeTask(id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.delete_outline,
+                    color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hasReminder
+                        ? '"$name" deleted — reminder cancelled.'
+                        : '"$name" deleted.',
+                  ),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.red400,
+          ),
+        );
+      }
     }
   }
 }

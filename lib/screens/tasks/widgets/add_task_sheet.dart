@@ -65,7 +65,29 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
       await provider.setReminder(newTask.id, _hhmm(_reminderTime!));
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) {
+      // Show in-app notification before closing the sheet
+      final reminderMsg = _reminderTime != null
+          ? ' · reminder at ${_fmtTime(_reminderTime!)}'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline,
+                  color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('"$name" added$reminderMsg'),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override
