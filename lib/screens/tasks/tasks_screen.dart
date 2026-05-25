@@ -189,7 +189,11 @@ class TasksScreen extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      await context.read<TaskProvider>().removeTask(id);
+      final logProvider = context.read<LogProvider>();
+      await context.read<TaskProvider>().removeTask(
+            id,
+            onRemoved: logProvider.removeLogsForTask,
+          );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

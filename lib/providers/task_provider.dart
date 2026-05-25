@@ -38,12 +38,14 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // ── Remove ───────────────────────────────────────────────────────────────
-  Future<void> removeTask(String id) async {
+  Future<void> removeTask(String id, {void Function(String)? onRemoved}) async {
     // Cancel any live reminder before deleting
     await ReminderService.instance.cancelReminder(id);
     await _repository.deleteTask(id);
     _tasks.removeWhere((t) => t.id == id);
     notifyListeners();
+    // Notify other providers (e.g. LogProvider) to purge in-memory data
+    onRemoved?.call(id);
   }
 
   // ── Reorder ──────────────────────────────────────────────────────────────

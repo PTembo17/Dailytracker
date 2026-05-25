@@ -23,6 +23,19 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Remove all in-memory log entries for [taskId] after it has been deleted.
+  /// The DB rows are already removed by SQLite's ON DELETE CASCADE; this
+  /// keeps the in-memory map in sync so the UI rebuilds correctly.
+  void removeLogsForTask(String taskId) {
+    for (final key in _logsByDate.keys.toList()) {
+      _logsByDate[key]?.removeWhere((log) => log.taskId == taskId);
+      if (_logsByDate[key]?.isEmpty == true) {
+        _logsByDate.remove(key);
+      }
+    }
+    notifyListeners();
+  }
+
   Future<void> toggleTask(String taskId, DateTime date) async {
     final key = DateUtilsHelper.ymd(date);
     final logs = _logsByDate[key] ?? [];
