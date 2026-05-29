@@ -41,11 +41,13 @@ class TaskProvider extends ChangeNotifier {
   Future<void> removeTask(String id, {void Function(String)? onRemoved}) async {
     // Cancel any live reminder before deleting
     await ReminderService.instance.cancelReminder(id);
+    // Delete from DB (logs deleted first inside a transaction — see TaskRepository)
     await _repository.deleteTask(id);
+    // Sync LogProvider in-memory state BEFORE notifyListeners so that
+    // StatsProvider (a ProxyProvider2 on both) never sees inconsistent data.
+    onRemoved?.call(id);
     _tasks.removeWhere((t) => t.id == id);
     notifyListeners();
-    // Notify other providers (e.g. LogProvider) to purge in-memory data
-    onRemoved?.call(id);
   }
 
   // ── Reorder ──────────────────────────────────────────────────────────────

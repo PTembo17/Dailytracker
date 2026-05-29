@@ -19,7 +19,13 @@ class TaskRepository {
 
   Future<void> deleteTask(String id) async {
     final db = await _dbHelper.database;
-    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    await db.transaction((txn) async {
+      // Explicitly delete logs before the task — never rely solely on
+      // ON DELETE CASCADE because the foreign_keys PRAGMA can be silently
+      // off on some Android SQLite versions/builds.
+      await txn.delete('task_logs', where: 'task_id = ?', whereArgs: [id]);
+      await txn.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    });
   }
 
   Future<void> updateTask(Task task) async {

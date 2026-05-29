@@ -21,7 +21,9 @@ class DatabaseHelper {
       version: 2,           // bumped from 1 → 2 for reminder columns
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
-      onOpen: (db) async {
+      // onConfigure runs first, before onCreate/onUpgrade/onOpen — the
+      // correct place to enable PRAGMAs so they apply to every operation.
+      onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
     );
